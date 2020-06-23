@@ -45,29 +45,71 @@ CAC['Volume of abatement sold to the Commonwealth under contract'] = \
     [int(str(CAC['Volume of abatement sold to the Commonwealth under contract'][i]).replace(',', ''))
      for i in range(len(CAC))]
 
+CAC.to_excel('CAC Register.xlsx')
+
 # CAC Register merged with ERF Register
-CAC_merged_ERF = CAC.merge(ERF, left_on='Project ID', right_on='Project ID')
-CAC_merged_ERF.drop(["Scheme Participant", "Project Name", "Method Type", "Project Description",
-                     "Date Project Registered", "Project location (postcode)",
-                     "Project Area(s), where the project is an area based offsets project",
-                     "If the area-based project is covered by a regional natural resource management plan, "
-                     "is it consistent with that plan?", "Joint Implementation project",
-                     "Is the project area or project areas subject to a Carbon Maintenance Obligation (CMO)?",
-                     "Conditional upon all regulatory approvals being obtained",
-                     "Conditional upon the written consent of relevant interest holders",
-                     "Nominated Permanence Period, if applicable", "Finish date of permanence period, if applicable",
-                     "Contract ID", "KACCUs Total units issued", "KACCUs Units Issued in Financial Year 2012/13",
-                     "KACCUs Units Issued in Financial Year 2013/14", "KACCUs Units Issued in Financial Year 2014/15",
-                     "KACCUs Units Issued in Financial Year 2015/16", "KACCUs Units Issued in Financial Year 2016/17",
-                     "KACCUs Units Issued in Financial Year 2017/18", "KACCUs Units Issued in Financial Year 2018/19",
-                     "KACCUs Units Issued in Financial Year 2019/20", "Name of person/s to whom the KACCUs issued",
-                     "Total Number of KACCUs units relinquished", "NKACCUs Total units issued",
-                     "NKACCUs Units Issued in Financial Year 2012/13", "NKACCUs Units Issued in Financial Year 2013/14",
-                     "NKACCUs Units Issued in Financial Year 2014/15", "NKACCUs Units Issued in Financial Year 2015/16",
-                     "NKACCUs Units Issued in Financial Year 2016/17", "NKACCUs Units Issued in Financial Year 2017/18",
-                     "NKACCUs Units Issued in Financial Year 2018/19", "NKACCUs Units Issued in Financial Year 2019/20",
-                     "Name of person/s to whom the NKACCUs issued", "Total Number of NKACCUs units relinquished",
-                     "Notes"], axis=1, inplace=True)
+
+# NON funziona
+# BOTH = pd.merge(ERF, CAC, left_on='Contract ID', right_on='Carbon Abatement Contract ID')
+# BOTH.to_excel("Both Registers.xlsx")
+
+# FUNZIONA: la somma dei Volume committed and delivered is correct, BUT total ACCUs too little.
+# BOTH = pd.merge(CAC, ERF, how='left')
+# BOTH.to_excel('Combined Registers.xlsx')
+# BOTH.join(ERF).to_excel('both2.xlsx')
+# Carino: giusti i volume leggermente troppo grande total ACCU
+# pd.merge(ERF, BOTH, how='outer').to_excel('Combined3.xlsx')
+
+# Carino: giusti i volume leggermente troppo grande total ACCU
+# merged = pd.merge(ERF, BOTH, how='outer')
+# merged.loc[merged['Project ID'].isnull(), 'Project ID'].unique()
+
+# OTHER TRY
+# merged = pd.merge(ERF, CAC, how='outer', left_on='Contract ID', right_on='Carbon Abatement Contract ID')
+# merged = merged.drop('Contract ID', 1) # drop duplicate info
+# merged.to_excel('merged.xlsx')
+
+
+# PERFETTO!!!!! MA ------ ho ancora delle ripetizioni, non le ho eliminate!!!
+BOTH = pd.merge(CAC, ERF, how='left')
+merged = pd.merge(ERF, BOTH, how='outer')
+new_Final = [merged['Final ACCUs issued'][0]]
+Repeated = ['']
+for i in range(len(merged) - 1):
+    if merged['Project ID'][i + 1] == merged['Project ID'][i]:
+        new_Final.append(0)
+        Repeated.append('Repeated')
+    else:
+        new_Final.append(merged['Final ACCUs issued'][i + 1])
+        Repeated.append('')
+merged['new_Final ACCUs issued'] = new_Final
+merged['Repeated'] = Repeated
+merged.to_excel('Combined Registers.xlsx')
+
+# Nop ....
+# CAC_merged_ERF = CAC.merge(ERF, left_on='Project ID', right_on='Project ID')
+# CAC_merged_ERF.drop(["Scheme Participant", "Project Name", "Method Type", "Project Description",
+#                      "Date Project Registered", "Project location (postcode)",
+#                      "Project Area(s), where the project is an area based offsets project",
+#                      "If the area-based project is covered by a regional natural resource management plan, "
+#                      "is it consistent with that plan?", "Joint Implementation project",
+#                      "Is the project area or project areas subject to a Carbon Maintenance Obligation (CMO)?",
+#                      "Conditional upon all regulatory approvals being obtained",
+#                      "Conditional upon the written consent of relevant interest holders",
+#                      "Nominated Permanence Period, if applicable", "Finish date of permanence period, if applicable",
+#                      "Contract ID", "KACCUs Total units issued", "KACCUs Units Issued in Financial Year 2012/13",
+#                      "KACCUs Units Issued in Financial Year 2013/14", "KACCUs Units Issued in Financial Year 2014/15",
+#                      "KACCUs Units Issued in Financial Year 2015/16", "KACCUs Units Issued in Financial Year 2016/17",
+#                      "KACCUs Units Issued in Financial Year 2017/18", "KACCUs Units Issued in Financial Year 2018/19",
+#                      "KACCUs Units Issued in Financial Year 2019/20", "Name of person/s to whom the KACCUs issued",
+#                      "Total Number of KACCUs units relinquished", "NKACCUs Total units issued",
+#                      "NKACCUs Units Issued in Financial Year 2012/13", "NKACCUs Units Issued in Financial Year 2013/14",
+#                      "NKACCUs Units Issued in Financial Year 2014/15", "NKACCUs Units Issued in Financial Year 2015/16",
+#                      "NKACCUs Units Issued in Financial Year 2016/17", "NKACCUs Units Issued in Financial Year 2017/18",
+#                      "NKACCUs Units Issued in Financial Year 2018/19", "NKACCUs Units Issued in Financial Year 2019/20",
+#                      "Name of person/s to whom the NKACCUs issued", "Total Number of NKACCUs units relinquished",
+#                      "Notes"], axis=1, inplace=True)
+
 
 # Voluntary Surrenders Register
 Vol_url = "http://www.cleanenergyregulator.gov.au/DocumentAssets/Documents/Voluntary%20Cancellations.csv"
