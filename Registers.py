@@ -1,5 +1,11 @@
 import pandas as pd
+import time
 import datetime
+
+today = datetime.datetime.now()
+month = today.strftime("%B")
+
+
 
 # IDEA: DataFrame.to_excel(excel_writer, sheet_name='Sheet1', na_rep='',
 # float_format=None, columns=None, header=True, index=True, index_label=None,
@@ -18,21 +24,32 @@ ERF['Final ACCUs issued'] = [int(str(ERF['ACCUs Total units issued'][i]).replace
                              int(str(ERF['Total Number of KACCUs units relinquished'][i]).replace(',', '')) -
                              int(str(ERF['Total Number of NKACCUs units relinquished'][i]).replace(',', ''))
                              for i in range(len(ERF))]
-ERF['Date Project Registered'] = pd.to_datetime(ERF['Date Project Registered'])
-ERF.to_excel('ERF Register.xlsx')
+
+# Brutto ma funziona
+Dates = []
+for i in range(len(ERF)):
+    dates = ERF['Date Project Registered'][i].split('/')
+    day = int(dates[0])
+    month = int(dates[1])
+    year = int(dates[2])
+    Dates.append(datetime.datetime(year, month, day))
+ERF['Dates'] = Dates
+# ERF['Date Project Registered'] = pd.to_datetime(ERF['Date Project Registered'])
+
+ERF.to_excel('ERF Register(Registers).xlsx')
 
 CAC_url = "http://www.cleanenergyregulator.gov.au/DocumentAssets/Documents/Carbon%20Abatement%20Contract%20table.csv"
 CAC = pd.read_csv(CAC_url, encoding='utf-8', thousands=',')
 
-# Numbers are strings
-CAC['Volume of abatement committed under contract'] = \
-    [int(str(CAC['Volume of abatement committed under contract'][i]).replace(',', '')) for i in range(len(CAC))]
-CAC['Volume of abatement sold to the Commonwealth under contract'] = \
-    [int(str(CAC['Volume of abatement sold to the Commonwealth under contract'][i]).replace(',', ''))
-     for i in range(len(CAC))]
+# No NEEDED anymore because of thousands=','
+# CAC['Volume of abatement committed under contract'] = \
+#     [int(str(CAC['Volume of abatement committed under contract'][i]).replace(',', '')) for i in range(len(CAC))]
+# CAC['Volume of abatement sold to the Commonwealth under contract'] = \
+#     [int(str(CAC['Volume of abatement sold to the Commonwealth under contract'][i]).replace(',', ''))
+#      for i in range(len(CAC))]
 
 # CAC['Actual contract end date'] = pd.to_datetime(CAC['Actual contract end date'])
-CAC.to_excel('CAC Register.xlsx')
+CAC.to_excel('CAC Register(Registers).xlsx')
 
 # Merged database
 # PERFETTO!!!!! MA ------ ho ancora delle ripetizioni, non le ho eliminate!!!
@@ -53,10 +70,17 @@ for i in range(len(merged) - 1):
 merged['new_Final ACCUs issued'] = new_Final
 merged['Repeated'] = Repeated
 
-# Il problema era che non si riuscivano a raggruppare per anni/quarters/mesi le date in excel.
-merged['Date Project Registered'] = pd.to_datetime(merged['Date Project Registered'])
 
-writer = pd.ExcelWriter("Combined Registers.xlsx", engine='xlsxwriter')
+
+# Il problema era che non si riuscivano a raggruppare per anni/quarters/mesi le date in excel.
+# NON funziona : scambia alcuni giorni con mesi
+# merged['Date Project Registered'] = pd.to_datetime(merged['Date Project Registered'], format='%m-%d-%Y')
+
+# merged['Dates'] = [ERF['Dates'][i] if i in range(len(ERF)) else 0 for i in range(len(merged))]
+# print(merged['Dates'])
+
+name = "Combined registered - " + str(today.strftime("%B")) +"(Registers).xlsx"
+writer = pd.ExcelWriter(name, engine='xlsxwriter')
 merged.to_excel(writer, sheet_name='Sheet1')
 workbook = writer.book
 worksheet = writer.sheets['Sheet1']
@@ -72,6 +96,6 @@ Vol.drop(['Unnamed: 4', 'Unnamed: 5'], axis=1, inplace=True)
 
 Vol['Number of units'] = [int(str(Vol['Number of units'][i]).replace(',', '')) for i in range(len(Vol))]
 
-Vol.to_excel('Voluntary Surrenders.xlsx')
+Vol.to_excel('Voluntary Surrenders(Registers).xlsx')
 
 writer.save()

@@ -35,6 +35,20 @@ ERF['Final ACCUs issued'] = [int(str(ERF['ACCUs Total units issued'][i]).replace
                              int(str(ERF['Total Number of NKACCUs units relinquished'][i]).replace(',', ''))
                              for i in range(len(ERF))]
 
+# Brutto ma funziona
+Dates = []
+for i in range(len(ERF)):
+    dates = ERF['Date Project Registered'][i].split('/')
+    day = int(dates[0])
+    month = int(dates[1])
+    year = int(dates[2])
+    Dates.append(datetime.datetime(year, month, day))
+ERF['Dates'] = Dates
+# Non funziona : inverte alcuni giorni con mesi e viceversa
+# ERF['Date Project Registered'] = pd.to_datetime(ERF['Date Project Registered'])
+
+# ERF.to_excel('ERF Register(MonthlyReport).xlsx')
+
 CAC_url = "http://www.cleanenergyregulator.gov.au/DocumentAssets/Documents/Carbon%20Abatement%20Contract%20table.csv"
 CAC = pd.read_csv(CAC_url, encoding='utf-8')
 
@@ -45,7 +59,7 @@ CAC['Volume of abatement sold to the Commonwealth under contract'] = \
     [int(str(CAC['Volume of abatement sold to the Commonwealth under contract'][i]).replace(',', ''))
      for i in range(len(CAC))]
 
-CAC.to_excel('CAC Register.xlsx')
+# CAC.to_excel('CAC Register(MonthlyReport).xlsx')
 
 # CAC Register merged with ERF Register
 
@@ -84,7 +98,7 @@ for i in range(len(merged) - 1):
         Repeated.append('')
 merged['new_Final ACCUs issued'] = new_Final
 merged['Repeated'] = Repeated
-merged.to_excel('Combined Registers.xlsx')
+merged.to_excel('Combined Registers(MonthlyReport).xlsx')
 
 # Nop ....
 # CAC_merged_ERF = CAC.merge(ERF, left_on='Project ID', right_on='Project ID')
@@ -119,7 +133,7 @@ Vol.drop(['Unnamed: 4', 'Unnamed: 5'], axis=1, inplace=True)
 Vol['Number of units'] = [int(str(Vol['Number of units'][i]).replace(',', '')) for i in range(len(Vol))]
 
 # Create Excel workbook
-workbook = xlsxwriter.Workbook(choose_month() + ' report.xlsx')
+workbook = xlsxwriter.Workbook(choose_month() + ' report(MonthlyReport).xlsx')
 worksheet = workbook.add_worksheet('ERF Summary of projects')
 
 Volume_committed_under_active_contract = sum([CAC['Volume of abatement committed under contract'][i]
@@ -266,7 +280,7 @@ fig.update_layout(
 )
 
 # Plot
-# fig.show()
+fig.show()
 
 worksheet = workbook.add_worksheet('Surplus')
 worksheet.set_column(0, 20, 25)
